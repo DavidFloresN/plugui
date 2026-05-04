@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>PLUGUI - Multicontacto Inteligente</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Estilos -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/x-icon" href="/icons/plug-solid-full.svg">
+</head>
+<body class="light-mode">
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-plug"></i>
+                <h1>PLUGUI<span>.</span></h1>
+            </div>
+            <div class="status-bar" id="statusBar">
+                <div class="status-item" id="wifiStatus">
+                    <i class="fas fa-wifi"></i>
+                    <span>Conectado</span>
+                </div>
+                <div class="status-item" id="bluetoothStatus" style="display: none;">
+                    <i class="fa-brands fa-bluetooth"></i>
+                    <span>BT Activo</span>
+                </div>
+                <div class="status-item" id="tempStatus">
+                    <i class="fas fa-thermometer-half"></i>
+                    <span id="tempValue">42°C</span>
+                </div>
+                <div class="status-item" id="totalPowerStatus">
+                    <i class="fas fa-bolt"></i>
+                    <span id="totalPower">0</span> W
+                </div>
+            </div>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+
+        <!-- Navegación -->
+        <div class="nav-tabs">
+            <button class="nav-btn active" data-panel="dashboard">
+                <i class="fas fa-tachometer-alt"></i> <span>Panel de Control</span>
+            </button>
+            <button class="nav-btn" data-panel="statistics">
+                <i class="fas fa-chart-line"></i> <span>Estadísticas</span>
+            </button>
+            <button class="nav-btn" data-panel="alerts">
+                <i class="fas fa-bell"></i> <span>Alertas</span>
+            </button>
+            <button class="nav-btn" data-panel="settings">
+                <i class="fas fa-cog"></i> <span>Configuración</span>
+            </button>
+        </div>
+
+        <!-- Panel Dashboard -->
+        <div class="panel active" id="dashboard">
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <i class="fas fa-dollar-sign"></i>
+                    <div>
+                        <span class="label">Consumo hoy (MXN)</span>
+                        <span class="value" id="todayCost">$0.00</span>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <i class="fas fa-charging-station"></i>
+                    <div>
+                        <span class="label">Consumo hoy en kWh</span>
+                        <span class="value" id="todayEnergy">0.00</span>
+                        <span class="unit">kWh</span>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="section-title">
+                <i class="fas fa-power-off"></i> Tomas de corriente
+                <span class="limit-badge">Límite: 1,905W total | 1,270W máximo para una sola única toma</span>
+            </h2>
+            <div class="outlets-grid" id="outletsGrid"></div>
+        </div>
+
+        <!-- Panel Estadísticas -->
+        <div class="panel" id="statistics">
+            <div class="chart-header">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i> Consumo histórico (Total)
+                </h2>
+                <div class="chart-period-buttons">
+                    <button class="period-btn active" data-period="day">24h</button>
+                    <button class="period-btn" data-period="week">Semana</button>
+                    <button class="period-btn" data-period="month">Mes</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="consumptionChart"></canvas>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 24px;">
+                <i class="fas fa-chart-line"></i> Ranking de consumo (potencia actual)
+            </h2>
+            <div class="ranking-list" id="rankingList"></div>
+        </div>
+
+        <!-- Panel Alertas -->
+        <div class="panel" id="alerts">
+            <div class="alert-filters">
+                <button class="filter-btn active" data-filter="all">Todas</button>
+                <button class="filter-btn" data-filter="overcurrent">Sobrecorriente</button>
+                <button class="filter-btn" data-filter="temperature">Temperatura</button>
+                <button class="filter-btn" data-filter="phantom">Consumo fantasma</button>
+                <button class="filter-btn" data-filter="wifi">WiFi</button>
+                <button class="filter-btn" data-filter="sensor">Sensor</button>
+            </div>
+            <div class="alerts-list" id="alertsList"></div>
+        </div>
+
+        <!-- Panel Configuración -->
+        <div class="panel" id="settings">
+            <!-- Tarifas CFE -->
+            <div class="settings-section">
+                <h3><i class="fas fa-tag"></i> Tarifa CFE</h3>
+                <div class="settings-row">
+                    <label>Tarifa Básica ($/kWh)</label>
+                    <input type="number" id="basicRate" step="0.01" value="1.116">
+                </div>
+                <div class="settings-row">
+                    <label>Tarifa Intermedia ($/kWh)</label>
+                    <input type="number" id="intermediateRate" step="0.01" value="1.357">
+                </div>
+                <div class="settings-row">
+                    <label>Tarifa Excedente ($/kWh)</label>
+                    <input type="number" id="excessRate" step="0.01" value="3.50">
+                </div>
+                <button class="save-btn" id="saveRatesBtn">Guardar tarifas</button>
+            </div>
+
+            <!-- Nombrar tomas -->
+            <div class="settings-section">
+                <h3><i class="fas fa-pen"></i> Nombrar tomas</h3>
+                <div id="outletNamesSettings"></div>
+            </div>
+
+            <!-- Automatizaciones (UI Demo) -->
+            <div class="settings-section">
+                <h3><i class="fas fa-clock"></i> Automatizaciones</h3>
+                <p class="info-text">Programa horarios para encender/apagar tus dispositivos automáticamente.</p>
+                <div id="automationsList" class="automations-list"></div>
+                <button class="add-automation-btn" id="addAutomationBtn">
+                    <i class="fas fa-plus"></i> Agregar automatización
+                </button>
+            </div>
+
+            <!-- Entrenar dispositivo mejorado -->
+            <div class="settings-section">
+                <h3><i class="fas fa-microchip"></i> Entrenar dispositivo</h3>
+                <p class="info-text">PLUGI puede aprender nuevos dispositivos analizando su consumo eléctrico.</p>
+                <div class="train-info">
+                    <div class="train-outlet-selector">
+                        <label>Seleccionar toma:</label>
+                        <select id="trainOutletSelect" class="train-select">
+                            <option value="0">Toma 1 - Refrigerador</option>
+                            <option value="1">Toma 2 - TV / Consola</option>
+                            <option value="2">Toma 3 - Cargadores</option>
+                            <option value="3">Toma 4 - Computadora</option>
+                        </select>
+                    </div>
+                    <button class="train-btn" id="trainDeviceBtn">
+                        <i class="fas fa-graduation-cap"></i> Iniciar aprendizaje
+                    </button>
+                </div>
+                
+                <!-- Dispositivos aprendidos -->
+                <div class="learned-devices-section">
+                    <h4><i class="fas fa-database"></i> Dispositivos conocidos</h4>
+                    <div id="learnedDevicesList" class="learned-devices-list"></div>
+                </div>
+            </div>
+
+            <!-- Pruebas y diagnóstico -->
+            <div class="settings-section">
+                <h3><i class="fas fa-flask"></i> Pruebas y diagnóstico</h3>
+                <button class="test-btn" id="testAlertsBtn">
+                    <i class="fas fa-bug"></i> Probar alertas
+                </button>
+            </div>
+
+            <!-- Dispositivo -->
+            <div class="settings-section">
+                <h3><i class="fas fa-microchip"></i> Dispositivo</h3>
+                <div class="info-row">
+                    <span>Versión firmware:</span>
+                    <span>v5.0.0</span>
+                </div>
+                <div class="info-row">
+                    <span>Ciclos relevadores (vida útil ~10,000):</span>
+                    <span id="relayCycles">0</span>
+                </div>
+                <button class="danger-btn" id="factoryResetBtn">
+                    <i class="fas fa-trash-alt"></i> Restablecer valores de fábrica
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de histórico por toma -->
+    <div id="historyModal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <span class="modal-close" id="historyModalClose">&times;</span>
+            <h3 id="historyModalTitle"><i class="fas fa-chart-line"></i> Historial de consumo</h3>
+            <div class="history-period-buttons">
+                <button class="history-period-btn active" data-history-period="day">Últimas 24h</button>
+                <button class="history-period-btn" data-history-period="week">Última semana</button>
+                <button class="history-period-btn" data-history-period="month">Último mes</button>
+            </div>
+            <canvas id="historyChart"></canvas>
+            <div class="history-stats" id="historyStats"></div>
+        </div>
+    </div>
+
+    <!-- Modal de entrenamiento mejorado -->
+    <div id="trainModal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <span class="modal-close" id="trainModalClose">&times;</span>
+            <h3><i class="fas fa-graduation-cap"></i> Aprendizaje de dispositivo</h3>
+            <div id="trainStepsContainer">
+                <div class="train-step active" id="trainStep1">
+                    <div class="train-step-icon"><i class="fas fa-plug"></i></div>
+                    <div class="train-step-content">
+                        <h4>Paso 1: Preparación</h4>
+                        <p>Asegúrate de que el dispositivo esté conectado a la toma <strong id="trainOutletName">Refrigerador</strong>.</p>
+                        <p>El dispositivo debe estar <strong>ENCENDIDO y funcionando normalmente</strong>.</p>
+                        <button class="train-next-btn" id="trainStep1Next">Continuar <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="train-step" id="trainStep2">
+                    <div class="train-step-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="train-step-content">
+                        <h4>Paso 2: Análisis de consumo</h4>
+                        <p>PLUGUI está analizando la firma eléctrica del dispositivo...</p>
+                        <div class="train-progress">
+                            <div class="train-progress-bar" id="trainProgressBar"></div>
+                        </div>
+                        <div class="train-readings" id="trainReadings"></div>
+                        <div class="train-stats" id="trainStats"></div>
+                    </div>
+                </div>
+
+                <div class="train-step" id="trainStep3">
+                    <div class="train-step-icon"><i class="fas fa-edit"></i></div>
+                    <div class="train-step-content">
+                        <h4>Paso 3: Configurar dispositivo</h4>
+                        <div class="train-form">
+                            <label>Nombre del dispositivo:</label>
+                            <input type="text" id="trainDeviceName" placeholder="Ej: Cafetera, Secadora, Horno...">
+                            
+                            <label>Tipo de dispositivo (opcional):</label>
+                            <select id="trainDeviceType">
+                                <option value="new">Nuevo dispositivo personalizado</option>
+                                <option value="refrigerador">Refrigerador</option>
+                                <option value="tv">TV / Consola</option>
+                                <option value="cargador">Cargadores</option>
+                                <option value="computadora">Computadora</option>
+                                <option value="microondas">Microondas</option>
+                                <option value="licuadora">Licuadora</option>
+                                <option value="ventilador">Ventilador</option>
+                                <option value="lampara">Lámpara</option>
+                            </select>
+                            
+                            <label>Ícono:</label>
+                            <div class="icon-selector" id="iconSelector">
+                                <i class="fas fa-plug icon-option selected" data-icon="fa-plug"></i>
+                                <img src="./icons/refrigerator.svg" class="icon-option" data-icon="./icons/refrigerator.svg" data-type="svg" style="width: 48px; height: 48px;">
+                                <i class="fas fa-tv icon-option" data-icon="fa-tv"></i>
+                                <i class="fas fa-mobile-button icon-option" data-icon="fa-mobile-button"></i>
+                                <i class="fas fa-laptop icon-option" data-icon="fa-laptop"></i>
+                                <img src="./icons/microwave.svg" class="icon-option" data-icon="./icons/microwave.svg" data-type="svg" style="width: 48px; height: 48px;">
+                                <i class="fas fa-blender icon-option" data-icon="fa-blender"></i>
+                                <i class="fas fa-fan icon-option" data-icon="fa-fan"></i>
+                                <i class="fas fa-lightbulb icon-option" data-icon="fa-lightbulb"></i>
+                                <img src="./icons/coffee-machine.svg" class="icon-option" data-icon="./icons/coffee-machine.svg" data-type="svg" style="width: 48px; height: 48px;">
+                                <img src="./icons/dryer.svg" class="icon-option" data-icon="./icons/dryer.svg" data-type="svg" style="width: 48px; height: 48px;">
+                                <i class="fas fa-plus icon-option" data-icon="fa-plus"></i>
+                            </div>
+                        </div>
+                        <button class="train-next-btn" id="trainStep3Save">Guardar dispositivo <i class="fas fa-save"></i></button>
+                    </div>
+                </div>
+
+                <div class="train-step" id="trainStep4">
+                    <div class="train-step-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="train-step-content">
+                        <h4>¡Dispositivo aprendido exitosamente!</h4>
+                        <div id="trainResult" class="train-result"></div>
+                        <button class="train-close-btn" id="trainCloseBtn">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de automatización -->
+    <div id="automationModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close" id="automationModalClose">&times;</span>
+            <h3 id="automationModalTitle"><i class="fas fa-clock"></i> Nueva automatización</h3>
+            <div class="automation-form">
+                <div class="form-group">
+                    <label>Nombre:</label>
+                    <input type="text" id="automationName" placeholder="Ej: Apagar TV por la noche">
+                </div>
+                <div class="form-group">
+                    <label>Días:</label>
+                    <div class="days-selector">
+                        <label class="day-check"><input type="checkbox" value="Lun"> L</label>
+                        <label class="day-check"><input type="checkbox" value="Mar"> M</label>
+                        <label class="day-check"><input type="checkbox" value="Mié"> M</label>
+                        <label class="day-check"><input type="checkbox" value="Jue"> J</label>
+                        <label class="day-check"><input type="checkbox" value="Vie"> V</label>
+                        <label class="day-check"><input type="checkbox" value="Sáb"> S</label>
+                        <label class="day-check"><input type="checkbox" value="Dom"> D</label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Hora inicio:</label>
+                        <input type="time" id="automationStartTime" value="22:00">
+                    </div>
+                    <div class="form-group">
+                        <label>Hora fin:</label>
+                        <input type="time" id="automationEndTime" value="06:00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Acción:</label>
+                    <select id="automationAction">
+                        <option value="on">Encender</option>
+                        <option value="off">Apagar</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tomas:</label>
+                    <div class="outlets-selector" id="automationOutlets">
+                        <label><input type="checkbox" value="0"> Toma 1 - Refrigerador</label>
+                        <label><input type="checkbox" value="1"> Toma 2 - TV / Consola</label>
+                        <label><input type="checkbox" value="2"> Toma 3 - Cargadores</label>
+                        <label><input type="checkbox" value="3"> Toma 4 - Computadora</label>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="cancel-btn" id="cancelAutomationBtn">Cancelar</button>
+                    <button class="save-btn" id="saveAutomationBtn">Guardar automatización</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificaciones -->
+    <div id="toastNotification" class="toast hidden">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <div id="pushNotification" class="push-notification hidden">
+        <div class="push-icon"><i class="fas fa-bell"></i></div>
+        <div class="push-content">
+            <div class="push-title">PLUGUI</div>
+            <div class="push-message" id="pushMessage"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
