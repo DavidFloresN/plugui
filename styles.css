@@ -5,7 +5,6 @@
     box-sizing: border-box;
 }
 
-
 .outlet-name img,
 .learned-devices-list img {
     filter: brightness(0) saturate(100%) invert(23%) sepia(97%) saturate(1856%) hue-rotate(108deg) brightness(96%) contrast(106%);
@@ -40,8 +39,6 @@ body.dark-mode .icon-option img {
     filter: brightness(0) invert(1);
 }
 
-
-
 body {
     font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
     background: #0296a4;
@@ -62,7 +59,6 @@ body.dark-mode .settings-section,
 body.dark-mode .nav-tabs,
 body.dark-mode .status-bar,
 body.dark-mode .alert-item,
-body.dark-mode .ranking-list,
 body.dark-mode .chart-container,
 body.dark-mode .modal-content,
 body.dark-mode .automation-item,
@@ -309,7 +305,7 @@ body.dark-mode .theme-toggle {
     color: #64748b;
 }
 
-/* Sección tomas */
+/* Seccion tomas */
 .section-title {
     font-size: 18px;
     margin-bottom: 16px;
@@ -335,9 +331,15 @@ body.dark-mode .limit-badge {
 
 .outlets-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
     margin-bottom: 24px;
+}
+
+@media (max-width: 767px) {
+    .outlets-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .outlet-card {
@@ -422,6 +424,60 @@ body.dark-mode .limit-badge {
     font-size: 14px;
 }
 
+.consumption-detail .cost-value {
+    color: #007d1f;
+    font-weight: 600;
+}
+
+.temp-detail {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.temp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+}
+
+.temp-badge.normal {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.temp-badge.warning {
+    background: #fed7aa;
+    color: #9a3412;
+}
+
+.temp-badge.danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+body.dark-mode .temp-badge.normal {
+    background: #064e3b;
+    color: #86efac;
+}
+
+body.dark-mode .temp-badge.warning {
+    background: #7c2d12;
+    color: #fdba74;
+}
+
+body.dark-mode .temp-badge.danger {
+    background: #7f1d1d;
+    color: #fca5a5;
+}
+
 .history-hint {
     font-size: 11px;
     color: #64748b;
@@ -495,31 +551,6 @@ body.dark-mode .limit-badge {
 canvas {
     max-height: 300px;
     width: 100%;
-}
-
-/* Ranking */
-.ranking-list {
-    background: white;
-    border-radius: 20px;
-    padding: 16px;
-}
-
-.ranking-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.ranking-item:last-child {
-    border-bottom: none;
-}
-
-.ranking-item .rank-number {
-    font-weight: bold;
-    color: #007d1f;
-    width: 30px;
 }
 
 /* Alertas */
@@ -608,11 +639,16 @@ canvas {
     gap: 8px;
 }
 
-.settings-row input {
+.settings-row input, .tariff-select {
     padding: 8px 12px;
     border-radius: 12px;
     border: 1px solid #cbd5e1;
-    width: 100px;
+    width: 140px;
+}
+
+.tariff-select {
+    width: 100%;
+    max-width: 200px;
 }
 
 .info-text {
@@ -1157,7 +1193,7 @@ body.dark-mode .form-group select {
     flex: 1;
 }
 
-/* Días selector - Grid mejorado */
+/* Dias selector - Grid mejorado */
 .days-selector {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -1346,7 +1382,7 @@ body.dark-mode .push-notification {
     .day-check { max-width: 38px; }
 }
 
-/* Móvil */
+/* Movil */
 @media (max-width: 767px) {
     body { padding: 12px; padding-bottom: 80px; }
     .header { flex-direction: column; text-align: center; }
